@@ -19,21 +19,25 @@
 
         #pulsingheart {
             width: 100px;
-            height: 90px;
+            height: 100px;
             background: red;
             position: relative;
             transform: rotate(-45deg);
             transition: transform 0.3s ease;
+            margin-top: 20px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
         }
 
         #pulsingheart::before,
         #pulsingheart::after {
             content: "";
+            position: absolute;
+            width: 100px;
+            height: 100px;
             background: red;
             border-radius: 50%;
-            width: 100px;
-            height: 90px;
-            position: absolute;
         }
 
         #pulsingheart::before {
@@ -42,9 +46,11 @@
         }
 
         #pulsingheart::after {
-            left: 50px;
             top: 0;
+            left: 50px;
         }
+
+
 
         .burst {
             animation: burst 0.5s forwards;
