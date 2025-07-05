@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>To-Do App</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+    <button id="toggleDarkMode">🌓</button>
+    <h1>📝 To-Do List</h1>
+
+    <form id="noteForm">
+        <input type="text" id="noteInput" placeholder="Enter note" required />
+        <input type="text" id="categoryInput" placeholder="Category" />
+        <input type="datetime-local" id="reminderInput" />
+        <button type="submit">Add Note</button>
+    </form>
+
+    <div>
+        <input type="file" id="ocrInput" accept="image/*" />
+        <button id="cameraBtn">📷 Use Camera</button>
+        <video id="video" autoplay></video>
+        <canvas id="canvas" style="display: none;"></canvas>
+    </div>
+
+    <select id="filterCategory">
+        <option value="">All Categories</option>
+    </select>
+
+    <select id="sortNotes">
+        <option value="newest">Newest</option>
+        <option value="oldest">Oldest</option>
+    </select>
+
+    <ul id="notesList"></ul>
+
+    <script src="https://cdn.jsdelivr.net/npm/tesseract.js@4.1.1/dist/tesseract.min.js"></script>
+    <script src="script.js"></script>
+</body>
+
+</html>
