@@ -19,12 +19,14 @@
         <button type="submit">Add Note</button>
     </form>
 
-    <div>
-        <input type="file" id="ocrInput" accept="image/*" />
-        <button id="cameraBtn">📷 Use Camera</button>
-        <video id="video" autoplay></video>
-        <canvas id="canvas" style="display: none;"></canvas>
-    </div>
+    <input type="file" id="ocrInput" accept="image/*" />
+    <br />
+    <button id="cameraBtn">📷 Use Camera</button>
+    <br />
+    <video id="video" autoplay width="100%" style="max-width: 500ox;" height="auto"></video>
+    <br />
+    <canvas id="canvas" style="display: none;"></canvas>
+    <br />
 
     <select id="filterCategory">
         <option value="">All Categories</option>
@@ -35,7 +37,7 @@
         <option value="oldest">Oldest</option>
     </select>
 
-    <ul id="notesList"></ul>
+    <ul id="notesList" style="padding: 0;"></ul>
 
     <script src="https://cdn.jsdelivr.net/npm/tesseract.js@4.1.1/dist/tesseract.min.js"></script>
     <script src="script.js"></script>
