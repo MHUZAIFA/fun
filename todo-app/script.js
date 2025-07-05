@@ -14,7 +14,7 @@ document.body.classList.toggle(
   localStorage.getItem("darkMode") === "true"
 );
 
-// 📌 Toggle Dark Mode
+// Toggle Dark Mode
 toggleDarkMode.onclick = () => {
   document.body.classList.toggle("dark-mode");
   localStorage.setItem(
@@ -23,7 +23,7 @@ toggleDarkMode.onclick = () => {
   );
 };
 
-// 📌 Add Note
+// Add Note
 noteForm.addEventListener("submit", (e) => {
   e.preventDefault();
   const note = {
@@ -41,7 +41,7 @@ noteForm.addEventListener("submit", (e) => {
   noteForm.reset();
 });
 
-// 📌 Render Notes
+// Render Notes
 function renderNotes() {
   notesList.innerHTML = "";
   const filter = filterCategory.value;
@@ -70,7 +70,7 @@ function renderNotes() {
     notesList.appendChild(li);
   });
 
-  // Update category filter
+  // Update filter dropdown
   filterCategory.innerHTML = `<option value="">All Categories</option>`;
   categories.forEach((c) => {
     filterCategory.innerHTML += `<option value="${c}">${c}</option>`;
@@ -96,63 +96,106 @@ function saveNotes() {
   localStorage.setItem("notes", JSON.stringify(notes));
 }
 
-// 📌 OCR
+// OCR Upload
 document.getElementById("ocrInput").addEventListener("change", (e) => {
   const file = e.target.files[0];
   if (!file) return;
 
-  Tesseract.recognize(file, "eng").then(({ data: { text } }) => {
-    text.split("\n").forEach((line) => {
-      if (line.trim()) {
+  Tesseract.recognize(file, "eng", {
+    logger: (m) => console.log(m),
+  })
+    .then(({ data: { text } }) => {
+      const lines = text
+        .split("\n")
+        .map((l) => l.trim())
+        .filter((l) => l.length > 3);
+      if (lines.length === 0) return alert("No valid text found.");
+
+      lines.forEach((line) => {
         notes.push({
           id: Date.now() + Math.random(),
-          text: line.trim(),
+          text: line,
           category: "OCR",
           completed: false,
           created: new Date().toISOString(),
         });
-      }
+      });
+      saveNotes();
+      renderNotes();
+    })
+    .catch((err) => {
+      console.error("OCR error:", err);
+      alert("OCR failed.");
     });
-    saveNotes();
-    renderNotes();
-  });
 });
 
-// 📸 Use Camera
+// Camera OCR
 const video = document.getElementById("video");
 const canvas = document.getElementById("canvas");
 
-document.getElementById("cameraBtn").addEventListener("click", () => {
-  navigator.mediaDevices.getUserMedia({ video: true }).then((stream) => {
+document.getElementById("cameraBtn").addEventListener("click", async () => {
+  try {
+    let stream;
+    try {
+      // Try to use exact rear camera
+      stream = await navigator.mediaDevices.getUserMedia({
+        video: { facingMode: { exact: "environment" } },
+        audio: false,
+      });
+    } catch (error) {
+      // Fallback if "exact" fails (e.g., on desktop or unsupported device)
+      console.warn("Exact back camera not available, falling back to ideal...");
+      stream = await navigator.mediaDevices.getUserMedia({
+        video: { facingMode: { ideal: "environment" } },
+        audio: false,
+      });
+    }
+
     video.srcObject = stream;
+
     setTimeout(() => {
       const ctx = canvas.getContext("2d");
       canvas.width = video.videoWidth;
       canvas.height = video.videoHeight;
       ctx.drawImage(video, 0, 0);
-      video.srcObject.getTracks().forEach((track) => track.stop());
+      stream.getTracks().forEach((track) => track.stop());
+
       canvas.toBlob((blob) => {
-        Tesseract.recognize(blob, "eng").then(({ data: { text } }) => {
-          text.split("\n").forEach((line) => {
-            if (line.trim()) {
+        Tesseract.recognize(blob, "eng", {
+          logger: (m) => console.log(m),
+        })
+          .then(({ data: { text } }) => {
+            const lines = text
+              .split("\n")
+              .map((l) => l.trim())
+              .filter((l) => l.length > 3);
+            if (lines.length === 0) return alert("No valid text found.");
+
+            lines.forEach((line) => {
               notes.push({
                 id: Date.now() + Math.random(),
-                text: line.trim(),
+                text: line,
                 category: "Camera",
                 completed: false,
                 created: new Date().toISOString(),
               });
-            }
+            });
+            saveNotes();
+            renderNotes();
+          })
+          .catch((err) => {
+            console.error("OCR error:", err);
+            alert("OCR failed.");
           });
-          saveNotes();
-          renderNotes();
-        });
       });
     }, 2000);
-  });
+  } catch (err) {
+    console.error("Camera access error:", err);
+    alert("Camera not available or permission denied.");
+  }
 });
 
-// 📌 Browser Notification
+// Reminders
 function setReminder(note) {
   if (note.reminder) {
     const reminderTime = new Date(note.reminder).getTime();
