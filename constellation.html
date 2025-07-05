@@ -1,0 +1,326 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no" />
+    <title>Constellation of Love</title>
+    <style>
+        html,
+        body {
+            margin: 0;
+            background: black;
+            overflow: hidden;
+            height: 100%;
+            touch-action: none;
+        }
+
+        canvas {
+            display: block;
+        }
+
+        .love-text {
+            position: absolute;
+            color: rgba(255, 200, 220, 0.85);
+            font-family: 'Segoe UI', cursive, sans-serif;
+            font-size: 22px;
+            pointer-events: none;
+            white-space: nowrap;
+            animation: floatText 5s ease-out forwards;
+        }
+
+        @media screen and (max-width: 600px) {
+            .love-text {
+                font-size: 15px;
+            }
+            
+        }
+
+        @keyframes floatText {
+            0% {
+                transform: translateY(0);
+                opacity: 0;
+            }
+
+            20% {
+                opacity: 1;
+            }
+
+            80% {
+                opacity: 1;
+            }
+
+            100% {
+                transform: translateY(-80px);
+                opacity: 0;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <canvas id="loveCanvas"></canvas>
+
+    <script>
+        const canvas = document.getElementById('loveCanvas');
+        const ctx = canvas.getContext('2d');
+        canvas.width = window.innerWidth;
+        canvas.height = window.innerHeight;
+
+        let stars = [];
+        let floatingHearts = [];
+        let shootingStars = [];
+        let cursorHearts = [];
+        let hover = false;
+        const heartPoints = [];
+
+        const centerX = canvas.width / 2;
+        const centerY = canvas.height / 2;
+
+        // 💖 Romantic flowing sentences
+        const lovePhrases = [
+            'Our story began under a sky full of stars.',
+            'Your love is the gravity that keeps me grounded.',
+            'In your eyes, I see galaxies unknown.',
+            'With every heartbeat, I orbit closer to you.',
+            'You are the starlight I never want to lose.',
+            'Together, we shine brighter than any constellation.',
+            'Even in the dark, our love finds its glow.',
+            'You are written in my stars, forever and always.',
+            'No distance is too far for hearts aligned.',
+            'Our love dances across the cosmos endlessly.',
+            'I love you!',
+        ];
+        let phraseIndex = 0;
+
+        // 🧠 Generate scalable heart shape
+        function generateHeartPoints(scale) {
+            heartPoints.length = 0;
+            for (let t = 0; t < Math.PI * 2; t += 0.2) {
+                const x = 16 * Math.pow(Math.sin(t), 3);
+                const y = -13 * Math.cos(t) + 5 * Math.cos(2 * t) + 2 * Math.cos(3 * t) + Math.cos(4 * t);
+                heartPoints.push({
+                    x: centerX + x * scale,
+                    y: centerY + y * scale
+                });
+            }
+        }
+
+        // Adjust scale for mobile
+        const heartScale = Math.min(canvas.width, canvas.height) / 40;
+        generateHeartPoints(heartScale);
+
+        // Star
+        class Star {
+            constructor() {
+                this.reset();
+            }
+
+            reset() {
+                this.x = Math.random() * canvas.width;
+                this.y = Math.random() * canvas.height;
+                this.radius = Math.random() * 1.5 + 0.5;
+                this.brightness = Math.random();
+                this.pulseSpeed = Math.random() * 0.03 + 0.01;
+            }
+
+            update() {
+                this.brightness += this.pulseSpeed;
+                if (this.brightness >= 1 || this.brightness <= 0.2) this.pulseSpeed *= -1;
+            }
+
+            draw() {
+                ctx.beginPath();
+                ctx.fillStyle = `rgba(255, 255, 255, ${this.brightness})`;
+                ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
+                ctx.fill();
+            }
+        }
+
+        class FloatingHeart {
+            constructor(x, y, size = 12) {
+                this.x = x;
+                this.y = y;
+                this.alpha = 1;
+                this.size = size;
+                this.speedY = Math.random() * 0.5 + 0.2;
+            }
+
+            update() {
+                this.y -= this.speedY;
+                this.alpha -= 0.01;
+            }
+
+            draw() {
+                ctx.save();
+                ctx.globalAlpha = this.alpha;
+                ctx.fillStyle = '#ff69b4';
+                ctx.beginPath();
+                ctx.moveTo(this.x, this.y);
+                ctx.bezierCurveTo(this.x + this.size / 2, this.y - this.size,
+                    this.x + this.size, this.y + this.size / 3,
+                    this.x, this.y + this.size);
+                ctx.bezierCurveTo(this.x - this.size, this.y + this.size / 3,
+                    this.x - this.size / 2, this.y - this.size,
+                    this.x, this.y);
+                ctx.fill();
+                ctx.restore();
+            }
+        }
+
+        class ShootingStar {
+            constructor() {
+                this.x = Math.random() * canvas.width;
+                this.y = Math.random() * canvas.height / 2;
+                this.length = Math.random() * 100 + 40;
+                this.speed = 10;
+                this.angle = Math.PI / 4;
+                this.alpha = 1;
+            }
+
+            update() {
+                this.x += this.speed * Math.cos(this.angle);
+                this.y += this.speed * Math.sin(this.angle);
+                this.alpha -= 0.01;
+            }
+
+            draw() {
+                let grad = ctx.createLinearGradient(this.x, this.y, this.x - this.length, this.y - this.length);
+                grad.addColorStop(0, `rgba(255,255,255,${this.alpha})`);
+                grad.addColorStop(1, 'rgba(255,255,255,0)');
+                ctx.strokeStyle = grad;
+                ctx.lineWidth = 2;
+                ctx.beginPath();
+                ctx.moveTo(this.x, this.y);
+                ctx.lineTo(this.x - this.length, this.y - this.length);
+                ctx.stroke();
+            }
+        }
+
+        // Stars
+        for (let i = 0; i < 200; i++) {
+            stars.push(new Star());
+        }
+
+        function drawHeartLines() {
+            ctx.strokeStyle = 'rgba(255, 100, 150, 0.6)';
+            ctx.lineWidth = 1;
+            for (let i = 0; i < heartPoints.length - 1; i++) {
+                const p1 = heartPoints[i];
+                const p2 = heartPoints[i + 1];
+                ctx.beginPath();
+                ctx.moveTo(p1.x, p1.y);
+                ctx.lineTo(p2.x, p2.y);
+                ctx.stroke();
+            }
+        }
+
+        function animate() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+            stars.forEach(star => {
+                star.update();
+                star.draw();
+            });
+
+            if (hover) drawHeartLines();
+
+            floatingHearts.forEach((heart, index) => {
+                heart.update();
+                heart.draw();
+                if (heart.alpha <= 0) floatingHearts.splice(index, 1);
+            });
+
+            cursorHearts.forEach((heart, index) => {
+                heart.update();
+                heart.draw();
+                if (heart.alpha <= 0) cursorHearts.splice(index, 1);
+            });
+
+            shootingStars.forEach((shootingStar, index) => {
+                shootingStar.update();
+                shootingStar.draw();
+                if (shootingStar.alpha <= 0) shootingStars.splice(index, 1);
+            });
+
+            requestAnimationFrame(animate);
+        }
+
+        function createHeartTrail(x, y) {
+            cursorHearts.push(new FloatingHeart(x, y, 8));
+        }
+
+        function triggerBurst(x, y) {
+            shootingStars.push(new ShootingStar());
+            for (let i = 0; i < 6; i++) {
+                floatingHearts.push(new FloatingHeart(x + Math.random() * 40 - 20, y + Math.random() * 40 - 20));
+            }
+            showLoveText(x, y);
+        }
+
+        let activeTextPositions = [];
+
+        let currentLoveText = null;
+
+        function showLoveText(x, y) {
+            // Remove previous text immediately
+            if (currentLoveText) {
+                currentLoveText.remove();
+                currentLoveText = null;
+            }
+
+            // Create new text element
+            const text = document.createElement('div');
+            text.className = 'love-text';
+            text.textContent = lovePhrases[phraseIndex % lovePhrases.length];
+            phraseIndex++;
+
+            text.style.left = `${x}px`;
+            text.style.top = `${y - 40}px`;
+            text.style.animationDelay = `0s`;
+
+            document.body.appendChild(text);
+            currentLoveText = text;
+
+            // Remove text after animation ends (5 seconds)
+            setTimeout(() => {
+                if (currentLoveText === text) {
+                    text.remove();
+                    currentLoveText = null;
+                }
+            }, 5000);
+        }
+
+
+        // Events
+        canvas.addEventListener('mousemove', (e) => {
+            hover = true;
+            createHeartTrail(e.clientX, e.clientY);
+        });
+
+        canvas.addEventListener('mouseleave', () => hover = false);
+        canvas.addEventListener('click', (e) => triggerBurst(e.clientX, e.clientY));
+
+        // Touch
+        canvas.addEventListener('touchstart', (e) => {
+            hover = true;
+            const touch = e.touches[0];
+            triggerBurst(touch.clientX, touch.clientY);
+        });
+
+        canvas.addEventListener('touchmove', (e) => {
+            const touch = e.touches[0];
+            createHeartTrail(touch.clientX, touch.clientY);
+        }, { passive: true });
+
+        window.addEventListener('resize', () => {
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+            generateHeartPoints(Math.min(canvas.width, canvas.height) / 30);
+        });
+
+        animate();
+    </script>
+</body>
+
+</html>
